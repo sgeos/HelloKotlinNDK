@@ -26,3 +26,11 @@ adb uninstall "${PACKAGE_NAME}"
 adb install -r app/build/outputs/apk/app-debug.apk
 ```
 
+The following tasks can be used to run tests on a connected device or emulator.
+
+```sh
+./gradlew connectedCheck
+./gradlew connectedAndroidTest
+./gradlew connectedDebugAndroidTest
+```
+
