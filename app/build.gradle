@@ -1,9 +1,22 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.stanfy.spoon:spoon-gradle-plugin:1.2.2'
+    }
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'spoon'
+apply plugin: 'jacoco'
 
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
+
     defaultConfig {
         applicationId "com.sennue.hellokotlinndk"
         minSdkVersion 17
@@ -17,17 +30,23 @@ android {
             }
         }
     }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            testCoverageEnabled true
+        }
     }
+
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
         }
     }
+
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
         test.java.srcDirs += 'src/test/kotlin'
@@ -35,17 +54,59 @@ android {
     }
 }
 
+ext {
+    jacocoVersion = "0.7.5.201505241946"
+}
+
+configurations {
+    all {
+        resolutionStrategy {
+            force "org.jacoco:org.jacoco.agent:$jacocoVersion"
+        }
+    }
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Kotlin https://kotlinlang.org
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+
+    // AndroidSupportLibrary https://developer.android.com/topic/libraries/support-library/features.html
+    compile 'com.android.support:appcompat-v7:25.1.1'
+    compile 'com.android.support:design:25.1.1'
+
+    // JUnit http://junit.org/junit4/
+    testCompile 'junit:junit:4.12'
+
+    // Espresso https://developer.android.com/training/testing/ui-testing/espresso-testing.html
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:25.1.0'
-    compile 'com.android.support:design:25.1.0'
-    testCompile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    // Spoon https://github.com/square/spoon
+    androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
+
+    // Jacoco http://www.eclemma.org/jacoco/
+    // A specific version is needed for debug testCoverageEnabled
+    // working example http://stackoverflow.com/questions/41960873/error-after-updating-android-studio-to-2-2-3
+    androidTestCompile "org.jacoco:org.jacoco.agent:$jacocoVersion"
 }
+
 repositories {
     jcenter()
     mavenCentral()
 }
+
+spoon {
+    debug = true
+    codeCoverage = true
+    grantAllPermissions = true
+    adbTimeout = 60
+}
+
+// Do not do this because the coverage report can not generate directories that do not yet exist.
+//tasks.spoon.dependsOn 'createDebugCoverageReport'
